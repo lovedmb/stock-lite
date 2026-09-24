@@ -167,7 +167,7 @@ const I18N = {
     dataTitle:"데이터 (이 아이폰에만 저장됨)", master:"마스터 (Barcode Transducer)", eossList:"EOSS 리스트",
     priceList:"가격변경 리스트", optional:"(선택)", load:"CSV 불러오기", wipe:"저장된 데이터 모두 삭제",
     hint:"처음 한 번 파일을 고르면 이 아이폰 안에 저장되어, 다음부터는 바로 조회됩니다. 새 마스터/EOSS가 나오면 다시 고르세요 (같은 종류는 덮어씀). 여러 파일을 한 번에 골라도 되고, 종류는 내용을 보고 자동으로 구분합니다. 파일은 어디에도 전송되지 않습니다.",
-    tip:"바코드를 네모 안에 가로로 맞춰주세요. 흐리면 폰을 조금 떨어뜨리세요", close:"닫기",
+    tip:"바코드를 네모 안에 맞춰주세요 (가로·세로 모두 가능). 흐리면 폰을 조금 떨어뜨리세요", close:"닫기",
     phBarcode:"바코드 입력", phSku:"SKU 입력 (예: 792136)",
     none:"없음", rows:"건", noImg:"이미지 없음", notInMaster:"마스터에 없음", current:"현재",
     kMaster:"마스터", kEoss:"EOSS", kPrice:"가격변경",
@@ -184,7 +184,7 @@ const I18N = {
     dataTitle:"データ（このiPhoneにのみ保存）", master:"マスター (Barcode Transducer)", eossList:"EOSSリスト",
     priceList:"価格変更リスト", optional:"（任意）", load:"CSVを読み込む", wipe:"保存データをすべて削除",
     hint:"最初に一度ファイルを選ぶとこのiPhone内に保存され、次回からすぐ検索できます。新しいマスター/EOSSが出たら選び直してください（同じ種類は上書き）。複数ファイルを同時に選択でき、種類は内容から自動判別します。ファイルはどこにも送信されません。",
-    tip:"バーコードを枠内に横向きで合わせてください。ぼやける場合は少し離してください", close:"閉じる",
+    tip:"バーコードを枠内に合わせてください（横・縦どちらでも可）。ぼやける場合は少し離してください", close:"閉じる",
     phBarcode:"バーコードを入力", phSku:"SKUを入力（例: 792136）",
     none:"なし", rows:"件", noImg:"画像なし", notInMaster:"マスターにありません", current:"現在",
     kMaster:"マスター", kEoss:"EOSS", kPrice:"価格変更",
@@ -201,7 +201,7 @@ const I18N = {
     dataTitle:"Data (stored on this iPhone only)", master:"Master (Barcode Transducer)", eossList:"EOSS list",
     priceList:"Price change list", optional:"(optional)", load:"Load CSV", wipe:"Delete all saved data",
     hint:"Pick the files once and they are saved on this iPhone, so lookups work right away next time. When a new master/EOSS comes out, pick it again (same type is overwritten). You can select several files at once; the type is detected from the content. Files are never uploaded anywhere.",
-    tip:"Hold the barcode horizontally inside the box. If blurry, move the phone back a little", close:"Close",
+    tip:"Put the barcode inside the box (horizontal or vertical). If blurry, move the phone back a little", close:"Close",
     phBarcode:"Enter barcode", phSku:"Enter SKU (e.g. 792136)",
     none:"None", rows:" rows", noImg:"No image", notInMaster:"Not in master", current:"now",
     kMaster:"Master", kEoss:"EOSS", kPrice:"Price change",
@@ -501,36 +501,106 @@ function setMode(m){
 }
 
 /* ---------- scanner ---------- */
-// Engine: ZXing-C++ compiled to WebAssembly (barcode.js + zxing_reader.wasm, both served from this site).
-const SCAN_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf", "qr_code"];
-let detector = null, scanning = false, scanStream = null, scanTimer = null, scanFrames = 0;
+// Engine: ZXing-C++ compiled to WebAssembly (barcode.js = zxing-wasm reader, zxing_reader.wasm; both served from this site).
+const SCAN_FORMATS = ["EAN13", "EAN8", "UPCA", "UPCE", "Code128", "Code39", "ITF", "QRCode"];
+const BASE_OPTS = { formats: SCAN_FORMATS, tryHarder: true, tryRotate: true, tryInvert: true, tryDownscale: true, maxNumberOfSymbols: 1 };
+// One strategy per frame, cycling. Different crops / binarizers / pre-processing catch different kinds of bad images.
+const STRATEGIES = [
+  { region: "guide",    binarizer: "LocalAverage" },                                   // normal
+  { region: "guide",    binarizer: "GlobalHistogram" },                                // uneven light / glare
+  { region: "vertical", binarizer: "LocalAverage" },                                   // barcode held vertically
+  { region: "guide",    binarizer: "LocalAverage", contrast: true },                   // faded print
+  { region: "wide",     binarizer: "LocalAverage", smooth: 0.1, contrast: true, rescue: true },  // blurry / noisy / faded
+  { region: "full",     binarizer: "LocalAverage" },                                   // barcode outside the box
+  { region: "center",   binarizer: "LocalAverage", upscale: 3, rescue: true },         // tiny barcode
+  { region: "vertical", binarizer: "LocalAverage", smooth: 0.1, contrast: true, rescue: true }        // vertical + blurry/faded
+];
+// "rescue" strategies use a looser 1D check (minLineCount 1); their result must be seen twice before it is accepted.
+let engineReady = null, pendingHit = null, scanning = false, scanStream = null, scanTimer = null, scanFrames = 0;
 const scanCanvas = document.createElement("canvas");
 const scanCtx = scanCanvas.getContext("2d", { willReadFrequently: true });
 
-function getDetector(){
-  if (detector) return detector;
-  const api = window.BarcodeDetectionAPI;
-  if (!api) throw new Error("barcode.js failed to load");
-  api.prepareZXingModule({
+function loadEngine(){
+  if (engineReady) return engineReady;
+  const Z = window.ZXingWASM;
+  if (!Z) return Promise.reject(new Error("barcode.js failed to load"));
+  engineReady = Z.prepareZXingModule({
     overrides: { locateFile: (path, prefix) => path.endsWith(".wasm") ? new URL("zxing_reader.wasm", location.href).href : prefix + path },
     fireImmediately: true
   });
-  detector = new api.BarcodeDetector({ formats: SCAN_FORMATS });
-  return detector;
+  return engineReady;
 }
 function scanSay(t){ $("scanStatus").textContent = t; }
 
-// Map the on-screen guide box (video uses object-fit:cover) to source-pixel coordinates.
-function guideRect(v){
+// Map a rectangle on screen to source-video pixels (video uses object-fit:cover).
+function toSource(v, rect){
   const vw = v.videoWidth, vh = v.videoHeight, W = v.clientWidth, H = v.clientHeight;
   const s = Math.max(W / vw, H / vh);
-  const offX = (W - vw * s) / 2, offY = (H - vh * s) / 2;
-  const fr = $("frame").getBoundingClientRect(), vr = v.getBoundingClientRect();
-  const padX = fr.width * 0.08, padY = fr.height * 0.35;          // a little extra margin around the box
-  let x = (fr.left - vr.left - padX - offX) / s, y = (fr.top - vr.top - padY - offY) / s;
-  let w = (fr.width + padX * 2) / s, h = (fr.height + padY * 2) / s;
-  x = Math.max(0, x); y = Math.max(0, y); w = Math.min(vw - x, w); h = Math.min(vh - y, h);
+  const offX = (W - vw * s) / 2, offY = (H - vh * s) / 2, vr = v.getBoundingClientRect();
+  let x = (rect.left - vr.left - offX) / s, y = (rect.top - vr.top - offY) / s;
+  let w = rect.width / s, h = rect.height / s;
+  x = Math.max(0, Math.round(x)); y = Math.max(0, Math.round(y));             // whole pixels: avoids resampling blur
+  w = Math.min(vw - x, Math.round(w)); h = Math.min(vh - y, Math.round(h));
   return { x, y, w, h };
+}
+function regionRect(v, kind){
+  if (kind === "full") return { x: 0, y: 0, w: v.videoWidth, h: v.videoHeight };
+  const fr = $("frame").getBoundingClientRect();
+  const cx = fr.left + fr.width / 2, cy = fr.top + fr.height / 2;
+  if (kind === "center"){                                 // middle of the guide box, for tiny barcodes
+    const w = fr.width * 0.8, h = fr.height * 1.2;
+    return toSource(v, { left: cx - w / 2, top: cy - h / 2, width: w, height: h });
+  }
+  if (kind === "vertical"){                               // tall box through the centre
+    const w = fr.height * 1.3, h = Math.min(fr.width * 1.15, v.clientHeight * 0.8);
+    return toSource(v, { left: cx - w / 2, top: cy - h / 2, width: w, height: h });
+  }
+  const padX = fr.width * (kind === "wide" ? 0.3 : 0.15), padY = fr.height * 0.35;  // guide box + margin (keeps the quiet zone)
+  return toSource(v, { left: fr.left - padX, top: fr.top - padY, width: fr.width + padX * 2, height: fr.height + padY * 2 });
+}
+// Pre-processing on a grayscale copy:
+//  smooth: average along the bar direction (bars are vertical in "guide", horizontal in "vertical") — removes blur noise, keeps edges
+//  contrast: stretch the 2nd..98th brightness percentile to the full range
+function preprocess(img, st){
+  const { width: w, height: h, data: d } = img, n = w * h, g = new Float32Array(n);
+  for (let i = 0, j = 0; j < n; i += 4, j++) g[j] = (d[i] * 77 + d[i+1] * 150 + d[i+2] * 29) / 256;
+  let src = g;
+  if (st.smooth){
+    // radius = fraction of the size across the bars (rows for vertical bars, columns for horizontal bars)
+    const r = Math.max(3, Math.round(st.smooth * (st.region === "vertical" ? w : h))), out = new Float32Array(n);
+    if (st.region === "vertical"){                       // bars horizontal -> average along each row
+      for (let y = 0; y < h; y++){ const o = y * w; let acc = 0, c = 0;
+        for (let x = 0; x < Math.min(r, w); x++){ acc += g[o + x]; c++; }
+        for (let x = 0; x < w; x++){ if (x + r < w){ acc += g[o + x + r]; c++; } if (x - r - 1 >= 0){ acc -= g[o + x - r - 1]; c--; } out[o + x] = acc / c; } }
+    } else {                                             // bars vertical -> average down each column
+      for (let x = 0; x < w; x++){ let acc = 0, c = 0;
+        for (let y = 0; y < Math.min(r, h); y++){ acc += g[y * w + x]; c++; }
+        for (let y = 0; y < h; y++){ if (y + r < h){ acc += g[(y + r) * w + x]; c++; } if (y - r - 1 >= 0){ acc -= g[(y - r - 1) * w + x]; c--; } out[y * w + x] = acc / c; } }
+    }
+    src = out;
+  }
+  let lo = 0, hi = 255;
+  if (st.contrast){
+    const hist = new Uint32Array(256); for (let j = 0; j < n; j++) hist[src[j] | 0]++;
+    let acc = 0; const cut = n * 0.02;
+    for (lo = 0; lo < 255; lo++){ acc += hist[lo]; if (acc > cut) break; }
+    acc = 0; for (hi = 255; hi > 0; hi--){ acc += hist[hi]; if (acc > cut) break; }
+  }
+  const k = 255 / Math.max(1, hi - lo);
+  for (let i = 0, j = 0; j < n; i += 4, j++){ let y = (src[j] - lo) * k; y = y < 0 ? 0 : y > 255 ? 255 : y; d[i] = d[i+1] = d[i+2] = y; }
+  return img;
+}
+function grab(v, st){
+  const r = regionRect(v, st.region);
+  let k = st.upscale ? Math.round(Math.min(st.upscale, 2400 / r.w, Math.sqrt(4e6 / (r.w * r.h))) * 2) / 2 : 1;
+  if (st.region === "full" && r.w > 1920) k = 1920 / r.w;  // keep full-frame work bounded
+  k = Math.max(k, 0.1);
+  const cw = Math.max(1, Math.round(r.w * k)), ch = Math.max(1, Math.round(r.h * k));
+  scanCanvas.width = cw; scanCanvas.height = ch;
+  scanCtx.imageSmoothingEnabled = k !== 1; scanCtx.imageSmoothingQuality = "high";
+  scanCtx.drawImage(v, r.x, r.y, r.w, r.h, 0, 0, cw, ch);
+  const img = scanCtx.getImageData(0, 0, cw, ch);
+  return (st.smooth || st.contrast) ? preprocess(img, st) : img;
 }
 
 async function scanTick(){
@@ -538,25 +608,29 @@ async function scanTick(){
   const v = $("video");
   try{
     if (v.readyState >= 2 && v.videoWidth){
+      const st = STRATEGIES[scanFrames % STRATEGIES.length];
       scanFrames++;
-      // every 4th frame try the full picture, otherwise only the guide box (faster + sharper)
-      const r = (scanFrames % 4 === 0) ? { x: 0, y: 0, w: v.videoWidth, h: v.videoHeight } : guideRect(v);
-      scanCanvas.width = Math.round(r.w); scanCanvas.height = Math.round(r.h);
-      scanCtx.drawImage(v, r.x, r.y, r.w, r.h, 0, 0, scanCanvas.width, scanCanvas.height);
-      const found = await detector.detect(scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height));
+      const res = await ZXingWASM.readBarcodes(grab(v, st), { ...BASE_OPTS, binarizer: st.binarizer, minLineCount: st.rescue ? 1 : 2 });
       if (!scanning) return;
-      if (found && found.length){
-        const text = found[0].rawValue;
+      const hit = res.find(x => x.isValid && x.text);
+      let text = null;
+      if (hit){
+        const now = Date.now();
+        if (!st.rescue) text = hit.text;                                               // strict read: accept
+        else if (pendingHit && pendingHit.text === hit.text && now - pendingHit.at < 2500) text = hit.text; // confirmed twice
+        else pendingHit = { text: hit.text, at: now };
+      }
+      if (text){
         $("frame").classList.add("hit");
         setTimeout(() => { stopScan(); $("q").value = text; lookup(text); }, 150);
         return;
       }
-      if (scanFrames % 10 === 0) scanSay(`${t("scanning")} (${v.videoWidth}×${v.videoHeight})`);
+      if (scanFrames % 14 === 0) scanSay(`${t("scanning")} (${v.videoWidth}×${v.videoHeight})`);
     }
   }catch(e){
     scanSay(t("scanErr") + ": " + (e.message || e));
   }
-  scanTimer = setTimeout(scanTick, 60);
+  scanTimer = setTimeout(scanTick, 30);
 }
 
 function setupZoom(track){
@@ -588,7 +662,7 @@ async function startScan(){
   $("scanner").classList.remove("hidden"); $("frame").classList.remove("hit");
   scanSay(t("camPrep"));
   try{
-    getDetector();
+    const engine = loadEngine();
     scanStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
       video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
@@ -596,9 +670,9 @@ async function startScan(){
     const v = $("video"); v.srcObject = scanStream; v.setAttribute("playsinline", ""); await v.play();
     setupZoom(scanStream.getVideoTracks()[0]);
     scanSay(t("engineLoad"));
-    await detector.detect(new ImageData(8, 8));        // loads the wasm engine once
+    await engine;                                       // wasm engine ready
     scanSay(t("scanning"));
-    scanning = true; scanFrames = 0; scanTick();
+    scanning = true; scanFrames = 0; pendingHit = null; scanTick();
   }catch(e){
     stopScan();
     toast(e && e.name === "NotAllowedError" ? t("camDenied") : t("scanStartFail") + ": " + (e.message || e), 4000);
