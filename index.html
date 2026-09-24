@@ -31,29 +31,33 @@ html,body{margin:0;background:var(--bg);color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Hiragino Sans","Apple SD Gothic Neo",system-ui,sans-serif;
   font-size:16px;line-height:1.4}
 body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-.wrap{max-width:560px;margin:0 auto;padding:12px 16px 40px}
-header{display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px}
-header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.2px}
-.iconbtn{border:0;background:transparent;color:var(--muted);font-size:14px;padding:8px;border-radius:10px}
-.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--line);border-radius:12px;padding:3px;gap:3px;margin-bottom:12px}
-.tabs button{border:0;background:transparent;color:var(--muted);font-size:15px;font-weight:600;padding:9px 0;border-radius:10px}
+.wrap{max-width:560px;margin:0 auto;padding:6px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px;gap:8px}
+header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.2px}
+.hdr-r{display:flex;align-items:center;gap:4px}
+.lang{display:flex;background:var(--line);border-radius:9px;padding:2px;gap:2px}
+.lang button{border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:600;padding:4px 8px;border-radius:7px}
+.lang button.on{background:var(--card);color:var(--text)}
+.iconbtn{border:0;background:transparent;color:var(--muted);font-size:14px;padding:6px;border-radius:10px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--line);border-radius:12px;padding:3px;gap:3px;margin-bottom:8px}
+.tabs button{border:0;background:transparent;color:var(--muted);font-size:15px;font-weight:600;padding:7px 0;border-radius:10px}
 .tabs button.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.search{display:flex;gap:8px;margin-bottom:12px}
-.search input{flex:1;min-width:0;font-size:18px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--input);color:var(--text);outline:none}
+.search{display:flex;gap:8px;margin-bottom:8px}
+.search input{flex:1;min-width:0;font-size:18px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--input);color:var(--text);outline:none}
 .search input:focus{border-color:var(--accent)}
 .btn{border:0;border-radius:12px;padding:0 16px;font-size:16px;font-weight:600;background:var(--accent);color:var(--accent-text);white-space:nowrap}
 .btn.ghost{background:var(--card);color:var(--text);border:1px solid var(--line)}
 .btn.wide{width:100%;padding:14px}
-.card{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--line);margin-bottom:12px}
-.imgbox{background:#fff;border-radius:12px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;text-decoration:none}
+.card{background:var(--card);border-radius:16px;padding:12px;border:1px solid var(--line);margin-bottom:12px}
+.imgbox{background:#fff;border-radius:12px;aspect-ratio:1/.9;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:8px;text-decoration:none}
 .imgbox img{width:100%;height:100%;object-fit:contain}
 .imgbox .noimg{color:#8a8f99;font-size:14px}
-.name{font-size:17px;font-weight:600;margin:0 0 10px}
-.grid{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:15px}
+.name{font-size:16px;font-weight:600;margin:0 0 6px}
+.grid{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;font-size:15px;align-items:baseline}
 .grid dt{color:var(--muted)}
 .grid dd{margin:0;font-variant-numeric:tabular-nums;word-break:break-all}
 .price{font-size:22px;font-weight:700}
-.badge{border-radius:12px;padding:12px 14px;margin-top:12px}
+.badge{border-radius:12px;padding:8px 12px;margin-top:8px}
 .badge .t{font-size:13px;font-weight:700;letter-spacing:.4px}
 .badge .v{font-size:20px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
 .badge .s{font-size:14px;margin-top:2px}
@@ -94,7 +98,10 @@ header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.2px}
 <div class="wrap">
   <header>
     <h1>Stock Lookup</h1>
-    <button class="iconbtn" id="btnData">데이터</button>
+    <div class="hdr-r">
+      <div class="lang" id="langBox"><button data-lang="ko">한</button><button data-lang="ja">日</button><button data-lang="en">EN</button></div>
+      <button class="iconbtn" id="btnData" data-i18n="data">데이터</button>
+    </div>
   </header>
 
   <div class="tabs" role="tablist">
@@ -103,30 +110,30 @@ header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.2px}
   </div>
 
   <form class="search" id="searchForm" autocomplete="off">
-    <input id="q" inputmode="numeric" enterkeyhint="search" placeholder="바코드 입력" autocapitalize="characters" spellcheck="false">
-    <button type="button" class="btn" id="btnScan">스캔</button>
-    <button type="submit" class="btn ghost" id="btnGo">조회</button>
+    <input id="q" inputmode="numeric" enterkeyhint="search" placeholder="" autocapitalize="characters" spellcheck="false">
+    <button type="button" class="btn" id="btnScan" data-i18n="scan">스캔</button>
+    <button type="submit" class="btn ghost" id="btnGo" data-i18n="go">조회</button>
   </form>
 
   <div id="result"></div>
 
   <div id="recentBox" class="hidden">
-    <div class="sectiontitle"><span>최근 조회</span><button id="btnClearRecent">지우기</button></div>
+    <div class="sectiontitle"><span data-i18n="recent">최근 조회</span><button id="btnClearRecent" data-i18n="clear">지우기</button></div>
     <div class="card" style="padding:4px 14px"><ul class="list" id="recent"></ul></div>
   </div>
 
   <!-- data panel -->
   <div id="dataPanel" class="hidden">
-    <div class="sectiontitle"><span>데이터 (이 아이폰에만 저장됨)</span></div>
+    <div class="sectiontitle"><span data-i18n="dataTitle">데이터 (이 아이폰에만 저장됨)</span></div>
     <div class="card">
-      <div class="data-row"><span>마스터 (Barcode Transducer)</span><span class="st" id="stMaster">없음</span></div>
-      <div class="data-row"><span>EOSS 리스트</span><span class="st" id="stEoss">없음</span></div>
-      <div class="data-row"><span>가격변경 리스트 <span class="sub" style="color:var(--muted);font-size:12px">(선택)</span></span><span class="st" id="stPrice">없음</span></div>
+      <div class="data-row"><span data-i18n="master">마스터 (Barcode Transducer)</span><span class="st" id="stMaster">없음</span></div>
+      <div class="data-row"><span data-i18n="eossList">EOSS 리스트</span><span class="st" id="stEoss">없음</span></div>
+      <div class="data-row"><span><span data-i18n="priceList">가격변경 리스트</span> <span class="sub" style="color:var(--muted);font-size:12px" data-i18n="optional">(선택)</span></span><span class="st" id="stPrice">없음</span></div>
       <div style="margin-top:12px;display:grid;gap:8px">
-        <button class="btn wide" id="btnLoad">CSV 불러오기</button>
-        <button class="btn ghost wide" id="btnWipe">저장된 데이터 모두 삭제</button>
+        <button class="btn wide" id="btnLoad" data-i18n="load">CSV 불러오기</button>
+        <button class="btn ghost wide" id="btnWipe" data-i18n="wipe">저장된 데이터 모두 삭제</button>
       </div>
-      <p class="hint">처음 한 번 파일을 고르면 이 아이폰 안에 저장되어, 다음부터는 바로 조회됩니다. 새 마스터/EOSS가 나오면 다시 고르세요 (같은 종류는 덮어씀). 여러 파일을 한 번에 골라도 되고, 종류는 내용을 보고 자동으로 구분합니다. 파일은 어디에도 전송되지 않습니다.</p>
+      <p class="hint" data-i18n="hint">처음 한 번 파일을 고르면 이 아이폰 안에 저장되어, 다음부터는 바로 조회됩니다. 새 마스터/EOSS가 나오면 다시 고르세요 (같은 종류는 덮어씀). 여러 파일을 한 번에 골라도 되고, 종류는 내용을 보고 자동으로 구분합니다. 파일은 어디에도 전송되지 않습니다.</p>
     </div>
   </div>
   <input type="file" id="file" accept=".csv,text/csv,text/plain" multiple class="hidden">
@@ -138,8 +145,8 @@ header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.2px}
   <div class="zoom hidden" id="zoomBox"></div>
   <div class="bar">
     <p id="scanStatus">카메라 준비 중…</p>
-    <p class="tip">바코드를 네모 안에 가로로 맞추고, 흐리면 폰을 조금 떨어뜨리거나 2x를 눌러보세요</p>
-    <button id="btnStopScan">닫기</button>
+    <p class="tip" data-i18n="tip"></p>
+    <button id="btnStopScan" data-i18n="close">닫기</button>
   </div>
 </div>
 <div id="toast" class="hidden"></div>
@@ -152,6 +159,79 @@ const IMG_TAIL = "_RGB.jpg?q=70&sfrm=png&bgcolor=FFFFFF&sw=810";
 
 const $ = id => document.getElementById(id);
 const state = { mode: "barcode", master: null, eoss: null, price: null };
+
+/* ---------- i18n ---------- */
+const I18N = {
+  ko: {
+    data:"데이터", scan:"스캔", go:"조회", recent:"최근 조회", clear:"지우기",
+    dataTitle:"데이터 (이 아이폰에만 저장됨)", master:"마스터 (Barcode Transducer)", eossList:"EOSS 리스트",
+    priceList:"가격변경 리스트", optional:"(선택)", load:"CSV 불러오기", wipe:"저장된 데이터 모두 삭제",
+    hint:"처음 한 번 파일을 고르면 이 아이폰 안에 저장되어, 다음부터는 바로 조회됩니다. 새 마스터/EOSS가 나오면 다시 고르세요 (같은 종류는 덮어씀). 여러 파일을 한 번에 골라도 되고, 종류는 내용을 보고 자동으로 구분합니다. 파일은 어디에도 전송되지 않습니다.",
+    tip:"바코드를 네모 안에 가로로 맞춰주세요. 흐리면 폰을 조금 떨어뜨리세요", close:"닫기",
+    phBarcode:"바코드 입력", phSku:"SKU 입력 (예: 792136)",
+    none:"없음", rows:"건", noImg:"이미지 없음", notInMaster:"마스터에 없음", current:"현재",
+    kMaster:"마스터", kEoss:"EOSS", kPrice:"가격변경",
+    firstRun:"처음 한 번, [CSV 불러오기]로 master.csv와 eoss.csv를 골라주세요.",
+    noMaster:"마스터 파일이 없습니다. [CSV 불러오기]로 넣어주세요.",
+    unknownFile:"파일 종류를 알 수 없어요", saveFail:"저장 실패", loaded:"불러옴",
+    barcode:"바코드", wipeConfirm:"이 기기에 저장된 CSV 데이터를 모두 삭제할까요?", wiped:"데이터를 삭제했습니다.",
+    camPrep:"카메라 준비 중…", engineLoad:"스캐너 불러오는 중…", scanning:"인식 중…", scanErr:"스캐너 오류",
+    zoomFail:"줌 실패", noCam:"이 브라우저는 카메라를 지원하지 않아요 (https 주소로 열어야 해요)",
+    camDenied:"카메라 권한을 허용해 주세요 (설정 > Safari > 카메라)", scanStartFail:"스캔을 시작할 수 없어요"
+  },
+  ja: {
+    data:"データ", scan:"スキャン", go:"検索", recent:"最近の検索", clear:"クリア",
+    dataTitle:"データ（このiPhoneにのみ保存）", master:"マスター (Barcode Transducer)", eossList:"EOSSリスト",
+    priceList:"価格変更リスト", optional:"（任意）", load:"CSVを読み込む", wipe:"保存データをすべて削除",
+    hint:"最初に一度ファイルを選ぶとこのiPhone内に保存され、次回からすぐ検索できます。新しいマスター/EOSSが出たら選び直してください（同じ種類は上書き）。複数ファイルを同時に選択でき、種類は内容から自動判別します。ファイルはどこにも送信されません。",
+    tip:"バーコードを枠内に横向きで合わせてください。ぼやける場合は少し離してください", close:"閉じる",
+    phBarcode:"バーコードを入力", phSku:"SKUを入力（例: 792136）",
+    none:"なし", rows:"件", noImg:"画像なし", notInMaster:"マスターにありません", current:"現在",
+    kMaster:"マスター", kEoss:"EOSS", kPrice:"価格変更",
+    firstRun:"最初に一度、[CSVを読み込む]で master.csv と eoss.csv を選んでください。",
+    noMaster:"マスターファイルがありません。[CSVを読み込む]で追加してください。",
+    unknownFile:"ファイルの種類がわかりません", saveFail:"保存失敗", loaded:"読み込み完了",
+    barcode:"バーコード", wipeConfirm:"この端末に保存されたCSVデータをすべて削除しますか？", wiped:"データを削除しました。",
+    camPrep:"カメラ準備中…", engineLoad:"スキャナー読み込み中…", scanning:"読み取り中…", scanErr:"スキャナーエラー",
+    zoomFail:"ズーム失敗", noCam:"このブラウザはカメラに対応していません（httpsで開いてください）",
+    camDenied:"カメラへのアクセスを許可してください（設定 > Safari > カメラ）", scanStartFail:"スキャンを開始できません"
+  },
+  en: {
+    data:"Data", scan:"Scan", go:"Search", recent:"Recent", clear:"Clear",
+    dataTitle:"Data (stored on this iPhone only)", master:"Master (Barcode Transducer)", eossList:"EOSS list",
+    priceList:"Price change list", optional:"(optional)", load:"Load CSV", wipe:"Delete all saved data",
+    hint:"Pick the files once and they are saved on this iPhone, so lookups work right away next time. When a new master/EOSS comes out, pick it again (same type is overwritten). You can select several files at once; the type is detected from the content. Files are never uploaded anywhere.",
+    tip:"Hold the barcode horizontally inside the box. If blurry, move the phone back a little", close:"Close",
+    phBarcode:"Enter barcode", phSku:"Enter SKU (e.g. 792136)",
+    none:"None", rows:" rows", noImg:"No image", notInMaster:"Not in master", current:"now",
+    kMaster:"Master", kEoss:"EOSS", kPrice:"Price change",
+    firstRun:"First time: tap [Load CSV] and pick master.csv and eoss.csv.",
+    noMaster:"No master file. Add it with [Load CSV].",
+    unknownFile:"unknown file type", saveFail:"Save failed", loaded:"Loaded",
+    barcode:"Barcode", wipeConfirm:"Delete all CSV data saved on this device?", wiped:"Data deleted.",
+    camPrep:"Starting camera…", engineLoad:"Loading scanner…", scanning:"Scanning…", scanErr:"Scanner error",
+    zoomFail:"Zoom failed", noCam:"This browser can't use the camera (open the https address)",
+    camDenied:"Please allow camera access (Settings > Safari > Camera)", scanStartFail:"Can't start scanning"
+  }
+};
+function pickLang(){
+  try{ const v = localStorage.getItem("lang"); if (I18N[v]) return v; }catch{}
+  const n = (navigator.language || "").slice(0, 2);
+  return I18N[n] ? n : "en";
+}
+let LANG = pickLang();
+const t = k => (I18N[LANG] && I18N[LANG][k]) ?? I18N.ko[k] ?? k;
+let lastView = null;   // { kind:"lookup", q, mode } | { kind:"msg", key, err } — re-rendered when language changes
+function applyLang(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("#langBox button").forEach(b => b.classList.toggle("on", b.dataset.lang === LANG));
+  $("q").placeholder = state.mode === "barcode" ? t("phBarcode") : t("phSku");
+  setStatus();
+  if (lastView && lastView.kind === "lookup"){ const m = state.mode; state.mode = lastView.mode; lookup(lastView.q, true); state.mode = m; }
+  else if (lastView && lastView.kind === "msg") showMsgKey(lastView.key, lastView.err);
+}
+function setLang(l){ LANG = l; try{ localStorage.setItem("lang", l); }catch{} applyLang(); }
 
 /* ---------- utils ---------- */
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -278,10 +358,10 @@ const dbClear = () => dbDo("readwrite", s => s.clear());
 
 /* ---------- loading ---------- */
 function setStatus(){
-  const fmt = (x, label) => x ? `${x.count.toLocaleString()}건 · ${x.date}` : label;
+  const fmt = (x, label) => x ? `${x.count.toLocaleString()}${t("rows")} · ${x.date}` : label;
   for (const [k, id] of [["master","stMaster"],["eoss","stEoss"],["price","stPrice"]]){
     const el = $(id), v = state[k];
-    el.textContent = fmt(v, "없음"); el.classList.toggle("ok", !!v);
+    el.textContent = fmt(v, t("none")); el.classList.toggle("ok", !!v);
   }
 }
 function ingest(type, text, meta){
@@ -299,7 +379,7 @@ async function loadSaved(){
     }
   }catch(e){ console.warn(e); }
   setStatus();
-  if (!state.master){ $("dataPanel").classList.remove("hidden"); showMsg("처음 한 번, [CSV 불러오기]로 master.csv와 eoss.csv를 골라주세요."); }
+  if (!state.master){ $("dataPanel").classList.remove("hidden"); showMsgKey("firstRun"); }
 }
 
 async function onFiles(files){
@@ -308,20 +388,21 @@ async function onFiles(files){
     const text = await f.text();
     const rows = parseCSV(text.slice(0, 4000));
     const type = detectType(rows);
-    if (!type){ toast(`${f.name}: 파일 종류를 알 수 없어요`); continue; }
+    if (!type){ toast(`${f.name}: ${t("unknownFile")}`); continue; }
     const now = new Date(); const date = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
     const meta = { name: f.name, date };
     const built = ingest(type, text, meta);
-    try{ await dbPut(type, { text, ...meta }); }catch(e){ toast("저장 실패: " + e.message); }
-    done.push(`${ {master:"마스터",eoss:"EOSS",price:"가격변경"}[type] } ${built.count.toLocaleString()}건`);
+    try{ await dbPut(type, { text, ...meta }); }catch(e){ toast(t("saveFail") + ": " + e.message); }
+    done.push(`${t({master:"kMaster",eoss:"kEoss",price:"kPrice"}[type])} ${built.count.toLocaleString()}${t("rows")}`);
   }
   setStatus();
-  if (done.length) toast("불러옴: " + done.join(", "), 3000);
-  if (state.master && $("result").querySelector(".msg")) $("result").innerHTML = "";
+  if (done.length) toast(t("loaded") + ": " + done.join(", "), 3000);
+  if (state.master && $("result").querySelector(".msg")){ $("result").innerHTML = ""; lastView = null; }
 }
 
 /* ---------- lookup & render ---------- */
-function showMsg(t, err){ $("result").innerHTML = `<div class="msg${err ? " err" : ""}">${esc(t)}</div>`; }
+function showMsg(text, err){ $("result").innerHTML = `<div class="msg${err ? " err" : ""}">${esc(text)}</div>`; }
+function showMsgKey(key, err){ lastView = { kind: "msg", key, err }; showMsg(t(key), err); }
 
 function eossInfo(sku, price){
   if (!state.eoss || !sku) return null;
@@ -343,7 +424,7 @@ function priceInfo(sku){
   return { cur: p.cur, neu: p.neu, diff };
 }
 
-function render(rec, skuInput){
+function render(rec, skuInput, quiet){
   const sku = rec ? rec.sku : skuInput;
   const url = imgUrl(sku);
   const e = eossInfo(sku, rec ? rec.price : NaN);
@@ -351,9 +432,9 @@ function render(rec, skuInput){
   const html = `
   <div class="card">
     <a class="imgbox" href="${esc(url)}" target="_blank" rel="noopener">
-      <img src="${esc(url)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'noimg',textContent:'이미지 없음'}))">
+      <img src="${esc(url)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'noimg',textContent:'${esc(t("noImg"))}'}))">
     </a>
-    <p class="name">${rec ? esc(rec.name) : '<span style="color:var(--eoss)">마스터에 없음</span>'}</p>
+    <p class="name">${rec ? esc(rec.name) : `<span style="color:var(--eoss)">${esc(t("notInMaster"))}</span>`}</p>
     <dl class="grid">
       <dt>SKU</dt><dd>${esc(sku)}</dd>
       <dt>Barcode</dt><dd>${rec ? esc(rec.barcode) : "NOT FOUND"}</dd>
@@ -361,35 +442,36 @@ function render(rec, skuInput){
       <dt>Price</dt><dd class="price">${!rec ? "-" : (e && !isNaN(e.sale)) ? `<span class="strike">${yen(rec.price)}</span>` : yen(rec.price)}</dd>
     </dl>
     ${e ? `<div class="badge eoss"><div class="t">EOSS ↓ ${esc(e.label)}</div><div class="v">${yen(e.sale)}</div></div>` : ""}
-    ${p ? `<div class="badge pc"><div class="t">PRICE CHANGE ↓</div><div class="v">${yen(p.neu)}</div>${p.diff ? `<div class="s">${esc(p.diff)} (현재 ${yen(p.cur)})</div>` : ""}</div>` : ""}
+    ${p ? `<div class="badge pc"><div class="t">PRICE CHANGE ↓</div><div class="v">${yen(p.neu)}</div>${p.diff ? `<div class="s">${esc(p.diff)} (${esc(t("current"))} ${yen(p.cur)})</div>` : ""}</div>` : ""}
   </div>`;
   $("result").innerHTML = html;
-  addRecent(sku, rec ? rec.name : "");
+  if (!quiet) addRecent(sku, rec ? rec.name : "");
 }
 
-function lookup(raw){
+function lookup(raw, quiet){
   const q = String(raw || "").trim();
   if (!q) return;
-  if (!state.master){ $("dataPanel").classList.remove("hidden"); showMsg("마스터 파일이 없습니다. [CSV 불러오기]로 넣어주세요.", true); return; }
+  if (!state.master){ $("dataPanel").classList.remove("hidden"); showMsgKey("noMaster", true); return; }
+  lastView = { kind: "lookup", q, mode: state.mode };
   if (state.mode === "barcode"){
     const d = q.replace(/\D/g, "");
     let rec = state.master.byBarcode.get(d);
     if (!rec && d.length === 12) rec = state.master.byBarcode.get("0" + d);   // UPC-A → EAN-13
     if (!rec && d.length === 13 && d[0] === "0") rec = state.master.byBarcode.get(d.slice(1));
-    if (!rec){ showMsg(`바코드 ${d} : NOT FOUND`, true); return; }
-    render(rec);
+    if (!rec){ showMsg(`${t("barcode")} ${d} : NOT FOUND`, true); return; }
+    render(rec, null, quiet);
   } else {
     const k = normSku(q);
     const rec = state.master.bySku.get(k);
-    if (rec){ render(rec); return; }
+    if (rec){ render(rec, null, quiet); return; }
     const hits = state.master.list.filter(r => normSku(r.sku).startsWith(k)).slice(0, 40);
-    if (hits.length === 1){ render(hits[0]); return; }
+    if (hits.length === 1){ render(hits[0], null, quiet); return; }
     if (hits.length){
       $("result").innerHTML = `<div class="card" style="padding:4px 14px"><ul class="list">${hits.map(r =>
         `<li><button data-sku="${esc(r.sku)}"><span>${esc(r.sku)}</span><span class="sub">${esc(r.name)}</span></button></li>`).join("")}</ul></div>`;
       return;
     }
-    render(null, q); // not in master: still show picture like the Excel sheet
+    render(null, q, quiet); // not in master: still show picture like the Excel sheet
   }
 }
 
@@ -414,7 +496,7 @@ function setMode(m){
   $("tabBarcode").classList.toggle("on", m === "barcode");
   $("tabSku").classList.toggle("on", m === "sku");
   const q = $("q");
-  q.placeholder = m === "barcode" ? "바코드 입력" : "SKU 입력 (예: 792136)";
+  q.placeholder = m === "barcode" ? t("phBarcode") : t("phSku");
   q.inputMode = m === "barcode" ? "numeric" : "text";
   $("btnScan").classList.toggle("hidden", m !== "barcode");
 }
@@ -429,7 +511,7 @@ const scanCtx = scanCanvas.getContext("2d", { willReadFrequently: true });
 function getDetector(){
   if (detector) return detector;
   const api = window.BarcodeDetectionAPI;
-  if (!api) throw new Error("barcode.js 로드 실패");
+  if (!api) throw new Error("barcode.js failed to load");
   api.prepareZXingModule({
     overrides: { locateFile: (path, prefix) => path.endsWith(".wasm") ? new URL("zxing_reader.wasm", location.href).href : prefix + path },
     fireImmediately: true
@@ -470,10 +552,10 @@ async function scanTick(){
         setTimeout(() => { stopScan(); $("q").value = text; lookup(text); }, 150);
         return;
       }
-      if (scanFrames % 10 === 0) scanSay(`인식 중… (${v.videoWidth}×${v.videoHeight})`);
+      if (scanFrames % 10 === 0) scanSay(`${t("scanning")} (${v.videoWidth}×${v.videoHeight})`);
     }
   }catch(e){
-    scanSay("스캐너 오류: " + (e.message || e));
+    scanSay(t("scanErr") + ": " + (e.message || e));
   }
   scanTimer = setTimeout(scanTick, 60);
 }
@@ -485,21 +567,25 @@ function setupZoom(track){
   if (!caps.zoom) return;
   const levels = [1, 2, 3].filter(z => z >= (caps.zoom.min || 1) && z <= caps.zoom.max);
   if (levels.length < 2) return;
+  const setZoom = async (z, btn) => {
+    try{ await track.applyConstraints({ advanced: [{ zoom: z }] }); box.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === btn)); }
+    catch(e){ scanSay(t("zoomFail") + ": " + e.message); }
+  };
+  let def = null;
   for (const z of levels){
-    const b = document.createElement("button"); b.textContent = z + "x"; if (z === 1) b.className = "on";
-    b.onclick = async () => {
-      try{ await track.applyConstraints({ advanced: [{ zoom: z }] }); box.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); }
-      catch(e){ scanSay("줌 실패: " + e.message); }
-    };
+    const b = document.createElement("button"); b.textContent = z + "x";
+    b.onclick = () => setZoom(z, b);
     box.appendChild(b);
+    def = b;                         // highest available level (3x when supported) is the default
   }
   box.classList.remove("hidden");
+  setZoom(levels[levels.length - 1], def);
 }
 
 async function startScan(){
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ toast("이 브라우저는 카메라를 지원하지 않아요 (https 주소로 열어야 해요)"); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ toast(t("noCam")); return; }
   $("scanner").classList.remove("hidden"); $("frame").classList.remove("hit");
-  scanSay("카메라 준비 중…");
+  scanSay(t("camPrep"));
   try{
     getDetector();
     scanStream = await navigator.mediaDevices.getUserMedia({
@@ -508,13 +594,13 @@ async function startScan(){
     });
     const v = $("video"); v.srcObject = scanStream; v.setAttribute("playsinline", ""); await v.play();
     setupZoom(scanStream.getVideoTracks()[0]);
-    scanSay("스캐너 불러오는 중…");
+    scanSay(t("engineLoad"));
     await detector.detect(new ImageData(8, 8));        // loads the wasm engine once
-    scanSay("인식 중…");
+    scanSay(t("scanning"));
     scanning = true; scanFrames = 0; scanTick();
   }catch(e){
     stopScan();
-    toast(e && e.name === "NotAllowedError" ? "카메라 권한을 허용해 주세요 (설정 > Safari > 카메라)" : "스캔을 시작할 수 없어요: " + (e.message || e), 4000);
+    toast(e && e.name === "NotAllowedError" ? t("camDenied") : t("scanStartFail") + ": " + (e.message || e), 4000);
   }
 }
 function stopScan(){
@@ -526,6 +612,7 @@ function stopScan(){
 
 /* ---------- wire up ---------- */
 $("tabBarcode").onclick = () => { setMode("barcode"); $("q").value = ""; };
+document.querySelectorAll("#langBox button").forEach(b => b.onclick = () => setLang(b.dataset.lang));
 $("tabSku").onclick = () => { setMode("sku"); $("q").value = ""; };
 $("searchForm").onsubmit = ev => { ev.preventDefault(); $("q").blur(); lookup($("q").value); };
 $("btnScan").onclick = startScan;
@@ -534,13 +621,14 @@ $("btnData").onclick = () => $("dataPanel").classList.toggle("hidden");
 $("btnLoad").onclick = () => $("file").click();
 $("file").onchange = ev => { const fs = [...ev.target.files]; ev.target.value = ""; onFiles(fs); };
 $("btnWipe").onclick = async () => {
-  if (!confirm("이 기기에 저장된 CSV 데이터를 모두 삭제할까요?")) return;
-  await dbClear(); state.master = state.eoss = state.price = null; setStatus(); showMsg("데이터를 삭제했습니다.");
+  if (!confirm(t("wipeConfirm"))) return;
+  await dbClear(); state.master = state.eoss = state.price = null; setStatus(); showMsgKey("wiped");
 };
 $("btnClearRecent").onclick = () => { try{ localStorage.removeItem("recent"); }catch{} drawRecent(); };
 document.addEventListener("click", ev => { const b = ev.target.closest("button[data-sku]"); if (b) openSku(b.dataset.sku); });
 
 setMode("barcode");
+applyLang();
 drawRecent();
 loadSaved();
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});

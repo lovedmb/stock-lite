@@ -1,5 +1,5 @@
 // App shell cache so the app opens offline. Data lives in IndexedDB, not here.
-const CACHE = "stock-lookup-v4";
+const CACHE = "stock-lookup-v5";
 const SHELL = ["./", "index.html", "barcode.js", "zxing_reader.wasm", "manifest.json", "icon-180.png", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
