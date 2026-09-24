@@ -99,7 +99,7 @@ header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.2px}
   <header>
     <h1>Stock Lookup</h1>
     <div class="hdr-r">
-      <div class="lang" id="langBox"><button data-lang="ko">한</button><button data-lang="ja">日</button><button data-lang="en">EN</button></div>
+      <div class="lang" id="langBox"><button data-lang="en">EN</button><button data-lang="ja">日</button><button data-lang="ko">한</button></div>
       <button class="iconbtn" id="btnData" data-i18n="data">데이터</button>
     </div>
   </header>
@@ -216,8 +216,7 @@ const I18N = {
 };
 function pickLang(){
   try{ const v = localStorage.getItem("lang"); if (I18N[v]) return v; }catch{}
-  const n = (navigator.language || "").slice(0, 2);
-  return I18N[n] ? n : "en";
+  return "en";   // default language
 }
 let LANG = pickLang();
 const t = k => (I18N[LANG] && I18N[LANG][k]) ?? I18N.ko[k] ?? k;
@@ -571,15 +570,17 @@ function setupZoom(track){
     try{ await track.applyConstraints({ advanced: [{ zoom: z }] }); box.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === btn)); }
     catch(e){ scanSay(t("zoomFail") + ": " + e.message); }
   };
+  const DEFAULT_ZOOM = 2;
+  const defZ = levels.includes(DEFAULT_ZOOM) ? DEFAULT_ZOOM : levels[levels.length - 1];
   let def = null;
   for (const z of levels){
     const b = document.createElement("button"); b.textContent = z + "x";
     b.onclick = () => setZoom(z, b);
     box.appendChild(b);
-    def = b;                         // highest available level (3x when supported) is the default
+    if (z === defZ) def = b;
   }
   box.classList.remove("hidden");
-  setZoom(levels[levels.length - 1], def);
+  setZoom(defZ, def);
 }
 
 async function startScan(){
