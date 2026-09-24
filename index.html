@@ -644,7 +644,7 @@ function setupZoom(track){
     try{ await track.applyConstraints({ advanced: [{ zoom: z }] }); box.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === btn)); }
     catch(e){ scanSay(t("zoomFail") + ": " + e.message); }
   };
-  const DEFAULT_ZOOM = 2;
+  const DEFAULT_ZOOM = 1;
   const defZ = levels.includes(DEFAULT_ZOOM) ? DEFAULT_ZOOM : levels[levels.length - 1];
   let def = null;
   for (const z of levels){
@@ -665,7 +665,7 @@ async function startScan(){
     const engine = loadEngine();
     scanStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 3840 }, height: { ideal: 2160 } }
     });
     const v = $("video"); v.srcObject = scanStream; v.setAttribute("playsinline", ""); await v.play();
     setupZoom(scanStream.getVideoTracks()[0]);
